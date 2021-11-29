@@ -8,7 +8,7 @@ namespace QMSDigitalTV.Digital
 {
     static class Endpoints
     {
-        public static string BaseUrl = "http://127.0.0.1:8000/";
+        public static string BaseUrl = "http://poracbankqms.com/";
 
         public static string BranchUrl = "qms-rest-api/branch/product_key";
 

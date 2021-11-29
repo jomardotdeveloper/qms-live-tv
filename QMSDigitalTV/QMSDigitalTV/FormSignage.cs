@@ -16,13 +16,15 @@ using System.Net.Http.Headers;
 using System.Net.Http.Formatting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Speech.Synthesis;
+using System.Threading;
 
 namespace QMSDigitalTV
 {
     public partial class FormSignage : Form
     {
         private WebSocket WbClient;
-        const string host = "ws://127.0.0.1:8090";
+        const string host = "ws://74.63.204.84:8090";
         delegate void LoadDelegate();
 
         /* TO HANDLE THE SSL CERTIFICATE ISSUE WITH THE API, WILL REMOVE UPON DEPLOYING THE REST API */
@@ -30,7 +32,7 @@ namespace QMSDigitalTV
         private HttpClient Client;
         private List<Transaction> Tokens;
 
-
+        private int BranchID;
         private string Window1;
         private string Window2;
         private string Window3;
@@ -49,7 +51,10 @@ namespace QMSDigitalTV
         List<Transaction> PriorityServing;
         List<Transaction> RegularServing;
 
-        Timer t = null;
+        System.Windows.Forms.Timer t = null;
+        private Queue<string> numbers = new Queue<string>();
+
+
         private void StartTimer()
         {
             t = new System.Windows.Forms.Timer();
@@ -68,7 +73,7 @@ namespace QMSDigitalTV
         {
             InitializeComponent();
             lblTime.Text = DateTime.Now.ToString();
-            //StartTimer();
+            StartTimer();
             //GetAllTokenForTheDay();
             //LoadWindows();
             //Load();
@@ -76,21 +81,26 @@ namespace QMSDigitalTV
             Load();
             WbClient = new WebSocket(host);
             WbClient.Connect();
+            this.BranchID = this.GetBranchID();
 
+            //if (Wbclient.isalive)
+            //{
 
-            if (WbClient.IsAlive)
-            {
-                WbClient.OnMessage += (ss, ee) => WebsocketResponse(ee.Data.ToString());
-            }
-            MessageBox.Show(WbClient.IsAlive.ToString());
+            //}
+
+            WbClient.OnMessage += (ss, ee) => WebsocketResponse(ee.Data.ToString());
+            //MessageBox.Show(WbClient.IsAlive.ToString());
+            
+            //this.PlayEndMusic();
+
         }
 
         private void WebsocketResponse(string message)
         {
             JObject json = JObject.Parse(message);
             JObject jsonMessage = JObject.Parse(json["message"].ToString());
-            
-            if(jsonMessage["message"].ToString() == "nextCustomer")
+            MessageBox.Show(json.ToString());
+            if(jsonMessage["message"].ToString() == "nextCustomer" && Convert.ToInt32(jsonMessage["branch_id"]) == this.BranchID)
             {
                 LoadTokensV2();
                 if (this.win_1.InvokeRequired)
@@ -103,10 +113,58 @@ namespace QMSDigitalTV
                     Load();
                 }
 
-                PlayMusic();
-            }else if (jsonMessage["message"].ToString() == "ring")
+
+
+
+                
+                if(Convert.ToInt32(jsonMessage["window_order"]) == 1)
+                {
+                    if(Window1 != null)
+                    {
+                        PlayMs(win_1.Text, jsonMessage["name"].ToString());
+                    }
+                }else if (Convert.ToInt32(jsonMessage["window_order"]) == 2)
+                {
+                    if(Window2 != null)
+                    {
+                        PlayMs(win_2.Text, jsonMessage["name"].ToString());
+                    }
+                }else if(Convert.ToInt32(jsonMessage["window_order"]) == 3)
+                {
+                    if (Window3 != null)
+                    {
+                        PlayMs(win_3.Text, jsonMessage["name"].ToString());
+                    }
+                }
+
+                //PlayMs(win_2.Text ,jsonMessage["window_name"].ToString());
+
+
+
+            }
+            else if (jsonMessage["message"].ToString() == "ring")
             {
-                PlayMusic();
+                if (Convert.ToInt32(jsonMessage["window_order"]) == 1)
+                {
+                    if (Window1 != null)
+                    {
+                        PlayMs(win_1.Text, jsonMessage["name"].ToString());
+                    }
+                }
+                else if (Convert.ToInt32(jsonMessage["window_order"]) == 2)
+                {
+                    if (Window2 != null)
+                    {
+                        PlayMs(win_2.Text, jsonMessage["name"].ToString());
+                    }
+                }
+                else if (Convert.ToInt32(jsonMessage["window_order"]) == 3)
+                {
+                    if (Window3 != null)
+                    {
+                        PlayMs(win_3.Text, jsonMessage["name"].ToString());
+                    }
+                }
             }
             //MessageBox.Show(json["message"]["message"].ToString());
             //if(json["message"].ToString() == "nextCustomer" || json["message"].ToString() == "newCustomer")
@@ -445,6 +503,11 @@ namespace QMSDigitalTV
             return 0;
         }
 
+        private void Speaker()
+        {
+
+        }
+
         private int GetWindow3ID()
         {
             int n = -1;
@@ -470,6 +533,52 @@ namespace QMSDigitalTV
             SoundPlayer player = new SoundPlayer();
             player.SoundLocation = pathLoc;
             player.Play();
+        }
+
+
+        private void PlayStartMusic()
+        {
+            string RunningPath = AppDomain.CurrentDomain.BaseDirectory;
+            string path = "{0}Resources\\start.wav";
+
+            string pathLoc = string.Format(@path, Path.GetFullPath(Path.Combine(RunningPath, @"..\..\")));
+
+            SoundPlayer player = new SoundPlayer();
+            player.SoundLocation = pathLoc;
+            player.Play();
+        }
+
+
+        private void PlayEndMusic()
+        {
+            string RunningPath = AppDomain.CurrentDomain.BaseDirectory;
+            string path = "{0}Resources\\end.wav";
+
+            string pathLoc = string.Format(@path, Path.GetFullPath(Path.Combine(RunningPath, @"..\..\")));
+
+            SoundPlayer player = new SoundPlayer();
+            player.SoundLocation = pathLoc;
+            player.Play();
+        }
+
+
+        private void Speak(String message)
+        {
+            string toSpeak = message;
+            SpeechSynthesizer speechSynthesizer = new SpeechSynthesizer();
+            speechSynthesizer.SelectVoiceByHints(VoiceGender.Female, VoiceAge.Adult);
+            speechSynthesizer.Rate = -2;
+            speechSynthesizer.Speak(toSpeak);
+            speechSynthesizer.Dispose();
+        }
+
+
+        private void PlayMs(String token, String window)
+        {
+            this.PlayStartMusic();
+            Thread.Sleep(2000);
+            this.Speak(token + ", Proceed to" +  window);
+            this.PlayEndMusic();
         }
     }
 }
