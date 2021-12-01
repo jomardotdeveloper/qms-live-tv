@@ -219,7 +219,7 @@ namespace QMSDigitalTV
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(287, 86);
             this.label1.TabIndex = 0;
-            this.label1.Text = "Windows";
+            this.label1.Text = "Window";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // label4

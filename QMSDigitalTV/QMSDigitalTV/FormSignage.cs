@@ -18,6 +18,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Speech.Synthesis;
 using System.Threading;
+using System.Globalization;
 
 namespace QMSDigitalTV
 {
@@ -66,13 +67,13 @@ namespace QMSDigitalTV
 
         void t_Tick(object sender, EventArgs e)
         {
-            lblTime.Text = DateTime.Now.ToString();
+            lblTime.Text = DateTime.Now.ToString("MMMM dd, yyyy   hh:mm tt", CultureInfo.InvariantCulture);
         }
 
         public FormSignage()
         {
             InitializeComponent();
-            lblTime.Text = DateTime.Now.ToString();
+            lblTime.Text = DateTime.Now.ToString("MMMM dd, yyyy   hh:mm tt", CultureInfo.InvariantCulture);
             StartTimer();
             //GetAllTokenForTheDay();
             //LoadWindows();
