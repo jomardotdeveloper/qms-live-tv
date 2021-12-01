@@ -53,7 +53,7 @@ namespace QMSDigitalTV
 
         System.Windows.Forms.Timer t = null;
         private Queue<string> numbers = new Queue<string>();
-
+        private SoundPlayer soundPlayer = new SoundPlayer();
 
         private void StartTimer()
         {
@@ -99,43 +99,45 @@ namespace QMSDigitalTV
         {
             JObject json = JObject.Parse(message);
             JObject jsonMessage = JObject.Parse(json["message"].ToString());
-            MessageBox.Show(json.ToString());
+            
             if(jsonMessage["message"].ToString() == "nextCustomer" && Convert.ToInt32(jsonMessage["branch_id"]) == this.BranchID)
             {
                 LoadTokensV2();
-                if (this.win_1.InvokeRequired)
+
+                if (this.win_1.InvokeRequired || this.win_2.InvokeRequired || this.win_3.InvokeRequired)
                 {
                     LoadDelegate d = new LoadDelegate(Load);
                     this.Invoke(d, new object[] { });
+                    Load();
                 }
                 else
                 {
                     Load();
                 }
 
-
-
-
-                
-                if(Convert.ToInt32(jsonMessage["window_order"]) == 1)
+                if (Convert.ToInt32(jsonMessage["window_order"]) == 1)
                 {
-                    if(Window1 != null)
+                    if (Window1 != null)
                     {
                         PlayMs(win_1.Text, jsonMessage["name"].ToString());
                     }
-                }else if (Convert.ToInt32(jsonMessage["window_order"]) == 2)
+                }
+                else if (Convert.ToInt32(jsonMessage["window_order"]) == 2)
                 {
-                    if(Window2 != null)
+                    if (Window2 != null)
                     {
                         PlayMs(win_2.Text, jsonMessage["name"].ToString());
                     }
-                }else if(Convert.ToInt32(jsonMessage["window_order"]) == 3)
+                }
+                else if (Convert.ToInt32(jsonMessage["window_order"]) == 3)
                 {
                     if (Window3 != null)
                     {
                         PlayMs(win_3.Text, jsonMessage["name"].ToString());
                     }
                 }
+
+
 
                 //PlayMs(win_2.Text ,jsonMessage["window_name"].ToString());
 
@@ -543,9 +545,9 @@ namespace QMSDigitalTV
 
             string pathLoc = string.Format(@path, Path.GetFullPath(Path.Combine(RunningPath, @"..\..\")));
 
-            SoundPlayer player = new SoundPlayer();
-            player.SoundLocation = pathLoc;
-            player.Play();
+
+            soundPlayer.SoundLocation = pathLoc;
+            soundPlayer.Play();
         }
 
 
@@ -556,9 +558,8 @@ namespace QMSDigitalTV
 
             string pathLoc = string.Format(@path, Path.GetFullPath(Path.Combine(RunningPath, @"..\..\")));
 
-            SoundPlayer player = new SoundPlayer();
-            player.SoundLocation = pathLoc;
-            player.Play();
+            soundPlayer.SoundLocation = pathLoc;
+            soundPlayer.Play();
         }
 
 
