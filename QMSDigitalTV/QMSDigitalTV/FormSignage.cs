@@ -25,7 +25,8 @@ namespace QMSDigitalTV
     public partial class FormSignage : Form
     {
         private WebSocket WbClient;
-        const string host = "ws://74.63.204.84:8090";
+        const string host = "ws://127.0.0.1:8090";
+        //74.63.204.84
         delegate void LoadDelegate();
 
         /* TO HANDLE THE SSL CERTIFICATE ISSUE WITH THE API, WILL REMOVE UPON DEPLOYING THE REST API */
@@ -75,24 +76,22 @@ namespace QMSDigitalTV
             InitializeComponent();
             lblTime.Text = DateTime.Now.ToString("MMMM dd, yyyy   hh:mm tt", CultureInfo.InvariantCulture);
             StartTimer();
-            //GetAllTokenForTheDay();
-            //LoadWindows();
-            //Load();
-            LoadTokensV2();
-            Load();
-            WbClient = new WebSocket(host);
-            WbClient.Connect();
-            this.BranchID = this.GetBranchID();
+            this.Handler = new HttpClientHandler()
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
 
-            //if (Wbclient.isalive)
-            //{
-
-            //}
-
-            WbClient.OnMessage += (ss, ee) => WebsocketResponse(ee.Data.ToString());
-            //MessageBox.Show(WbClient.IsAlive.ToString());
-            
-            //this.PlayEndMusic();
+            this.Client = new HttpClient(this.Handler);
+            this.Client.BaseAddress = new Uri(Endpoints.BaseUrl);
+            this.BranchID = this.GetBranchIDServer();
+            if(this.BranchID != 0)
+            {
+                LoadTokensV2();
+                Load();
+                WbClient = new WebSocket(host);
+                WbClient.Connect();
+                WbClient.OnMessage += (ss, ee) => WebsocketResponse(ee.Data.ToString());
+            } 
 
         }
 
@@ -262,17 +261,16 @@ namespace QMSDigitalTV
             
         }
 
+        private int GetBranchIDServer()
+        {
+            var response = this.Client.GetAsync(Endpoints.BranchIDUrl).Result;
+            JObject json = JObject.Parse(response.Content.ReadAsStringAsync().Result);
+            return Convert.ToInt32(json["branch_id"]);
+        }
+
         private void LoadTokensV2()
         {
-            this.Handler = new HttpClientHandler()
-            {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            };
-
-            this.Client = new HttpClient(this.Handler);
-            this.Client.BaseAddress = new Uri(Endpoints.BaseUrl);
-
-            string param = GetBranchID().ToString();
+            string param = this.BranchID.ToString();
             var response = this.Client.GetAsync(Endpoints.TokenUrl + param).Result;
             JObject json = JObject.Parse(response.Content.ReadAsStringAsync().Result);
 
