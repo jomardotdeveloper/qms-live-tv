@@ -25,8 +25,8 @@ namespace QMSDigitalTV
     public partial class FormSignage : Form
     {
         private WebSocket WbClient;
-        const string host = "ws://127.0.0.1:8090";
-        //74.63.204.84
+        const string host = "ws://192.168.0.5:8090";
+        //74.63.204.841
         delegate void LoadDelegate();
 
         /* TO HANDLE THE SSL CERTIFICATE ISSUE WITH THE API, WILL REMOVE UPON DEPLOYING THE REST API */
